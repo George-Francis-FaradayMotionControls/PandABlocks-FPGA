@@ -227,7 +227,7 @@ port (
         o_done    : out std_logic;          -- Transfer finished on Rising edge of this output.
         
         i_data    : in std_logic_vector(15 downto 0);   -- Data to send to the PIC.
-        o_data    : out std_logic_vector(15 downto 0)   -- Data received from the PIC.
+        o_data    : out std_logic_vector(17 downto 0)   -- Data received from the PIC.
 );
 end component;
 
@@ -419,12 +419,14 @@ signal outenc_conn          : std_logic_vector(ENC_NUM-1 downto 0);
 signal OUTENC_PROTOCOL      : std32_array(ENC_NUM-1 downto 0);
 signal OUTENC_PROTOCOL_WSTB : std_logic_vector(ENC_NUM-1 downto 0);
 
-signal pic_data_in          : std_logic_vector(15 downto 0);
+signal pic_data_in          : std_logic_vector(17 downto 0);
 signal pic_data_out         : std_logic_vector(15 downto 0);
 signal pic_done             : std_logic := '0';
 
-signal quad_LoS             : std_logic_vector(7 downto 0); --( <= pic_data_in[15:8] )
-signal LD_jumpers           : std_logic_vector(7 downto 0); --( <= pic_data_in[7:0]  )
+signal quad_LoS             : std_logic_vector(7 downto 0); --( <= pic_data_in(15 downto 8) )
+signal LD_jumpers           : std_logic_vector(7 downto 0); --( <= pic_data_in(7 downto 0)  )
+signal SFP_Rx_LoS           : std_logic;                    --( <= pic_data_in(16)          )
+signal SFP_Tx_Fault         : std_logic;                    --( <= pic_data_in(17)          )
 signal serial_pass          : std_logic_vector(7 downto 0);
 signal uvwt                 : std_logic_vector(7 downto 0);
 
@@ -1293,7 +1295,7 @@ pos_bus(POS_BUS_SIZE-1 downto 0) <= inenc_val;
 -- Test the Register Interface (provides dummy data)
 ---------------------------------------------------------------------------
 
-TEST_VAL <= (x"0000" & pic_data_in(15 downto 0));  --x"00000000", --TEST_VAL_IN,
+TEST_VAL <= (x"000" & b"00" & pic_data_in(17 downto 0));  --x"00000000", --TEST_VAL_IN,
 
 test_regs_inst : entity work.test_regs
 port map (
@@ -1325,8 +1327,10 @@ pic_data_out <= ( uvwt & serial_pass );
 
 
 -- Data returned from PIC...
-quad_LoS   <= pic_data_in(15 downto 8);
-LD_jumpers <= pic_data_in(7 downto 0);
+quad_LoS     <= pic_data_in(15 downto 8);
+LD_jumpers   <= pic_data_in(7 downto 0);
+SFP_Rx_LoS   <= pic_data_in(16);
+SFP_Tx_Fault <= pic_data_in(17);
 
 
 -----Instance of SPI controller -----
